@@ -14,6 +14,9 @@ public class Order
     public Guid ProductId { get; private set; }
     public int Quantity { get; private set; }
 
+    // enforces optimistic ocncurrency
+    public byte[] RowVersion { get; private set; } = [];
+
     public OrderStatus Status { get; set; }
 
     public DateTime CreatedAtUtc { get; private set; }
@@ -37,25 +40,37 @@ public class Order
         {
             ProductId = productId,
             Quantity = quantity,
-            Status = OrderStatus.Pending,
+            Status = OrderStatus.Draft,
             CreatedAtUtc = DateTime.UtcNow
         };
     }
 
-    public void UpdateDetails(
-        Guid productId,
+    public void UpdateQuantity(
         int quantity)
+
+
     {
-        if (productId == Guid.Empty)
-            throw new ArgumentException(
-                "Product ID is required.");
+
+        if (Status != OrderStatus.Draft)
+        {
+            throw new InvalidOperationException(
+                "Only draft orders can be updated.");
+        }
 
         if (quantity <= 0)
             throw new ArgumentException(
                 "Quantity must be positive.");
 
-        ProductId = productId;
         Quantity = quantity;
+    }
+
+    public void Submit()
+    {
+        if (Status != OrderStatus.Draft)
+            throw new InvalidOperationException(
+                "Only draft orders can be submitted.");
+
+        Status = OrderStatus.Pending;
     }
 
     public void StartProcessing()
@@ -111,5 +126,6 @@ public enum OrderStatus
     Completed,
     Failed,
     Cancelling,
-    Cancelled
+    Cancelled,
+    Draft
 }

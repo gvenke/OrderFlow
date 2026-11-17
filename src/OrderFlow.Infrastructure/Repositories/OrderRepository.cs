@@ -33,6 +33,18 @@ public class OrderRepository : IOrderRepository
                 cancellationToken);
     }
 
+
+    public Task<Order?> GetByIdForUpdateAsync(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        return _db.Orders
+            .FirstOrDefaultAsync(
+                x => x.Id == id,
+                cancellationToken);
+    }
+
+
     public Task<Order?> GetByCorrelationIdAsync(
         Guid correlationId,
         CancellationToken cancellationToken)
@@ -61,7 +73,6 @@ public class OrderRepository : IOrderRepository
 
     public async Task<bool> UpdateAsync(
         int id,
-        Guid productId,
         int quantity,
         CancellationToken cancellationToken)
     {
@@ -73,7 +84,7 @@ public class OrderRepository : IOrderRepository
         if (order is null)
             return false;
 
-        order.UpdateDetails(productId, quantity);
+        order.UpdateQuantity(quantity);
         return true;
     }
 

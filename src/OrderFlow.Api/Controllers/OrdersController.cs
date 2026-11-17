@@ -1,5 +1,6 @@
 ﻿
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OrderFlow.Application.Abstractions;
 using OrderFlow.Application.Orders;
 using OrderFlow.Application.Orders.CreateOrder;
@@ -44,10 +45,10 @@ public class OrdersController : ControllerBase
             command,
             cancellationToken);
 
-        return AcceptedAtAction(
+        return CreatedAtAction(
             nameof(GetById),
             new { id = order.Id },
-            new CreateOrderResponse(order.Id, "Pending"));
+            new CreateOrderResponse(order.Id, order.Status.ToString()));
     }
 
     [HttpGet("{id:int}")]
@@ -94,13 +95,31 @@ public class OrdersController : ControllerBase
     {
         var updated = await _service.UpdateAsync(
             id,
-            request.ProductId,
             request.Quantity,
             cancellationToken);
 
         return updated
             ? NoContent()
             : NotFound();
+    }
+
+    [HttpPut("{id:int}/submit")]
+    public async Task<ActionResult<SubmitOrderResponse>> Submit(
+        int id,
+        CancellationToken cancellationToken)
+    {
+
+        var response = await _service.SubmitAsync(
+            id, cancellationToken);
+
+        if (response is null)
+            return NotFound();
+
+        return AcceptedAtAction(
+            nameof(GetById),
+            new { id = response.Id },
+            response);
+
     }
 }
 

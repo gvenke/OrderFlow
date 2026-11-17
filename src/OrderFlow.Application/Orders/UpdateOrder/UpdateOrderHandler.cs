@@ -1,4 +1,7 @@
+
 using OrderFlow.Application.Abstractions;
+using OrderFlow.Application.Orders.UpdateOrder;
+using OrderFlow.Domain.Orders;
 
 namespace OrderFlow.Application.Orders.UpdateOrder;
 
@@ -19,17 +22,15 @@ public class UpdateOrderHandler
         UpdateOrderCommand command,
         CancellationToken cancellationToken)
     {
-        var updated = await _repository.UpdateAsync(
-            command.Id,
-            command.ProductId,
-            command.Quantity,
-            cancellationToken);
+        var order = await _repository.GetByIdForUpdateAsync(
+            command.Id, cancellationToken);
 
-        if (!updated)
+        if (order is null)
             return false;
 
-        await _unitOfWork.SaveChangesAsync(
-            cancellationToken);
+        order.UpdateQuantity(command.Quantity);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return true;
     }

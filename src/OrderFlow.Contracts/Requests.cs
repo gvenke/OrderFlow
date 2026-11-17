@@ -9,5 +9,4 @@ public record CreateOrderRequest(
     int Quantity);
 
 public record UpdateOrderRequest(
-    Guid ProductId,
     int Quantity);

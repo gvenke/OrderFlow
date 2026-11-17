@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<CreateOrderHandler>();
         services.AddScoped<CancelOrderHandler>();
         services.AddScoped<UpdateOrderHandler>();
+        services.AddScoped<SubmitOrderHandler>();
         services.AddScoped<OrderService>();
         return services;
     }

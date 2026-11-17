@@ -15,6 +15,11 @@ namespace OrderFlow.Application.Abstractions
             int id,
             CancellationToken cancellationToken);
 
+
+        Task<Order?> GetByIdForUpdateAsync(
+            int id,
+            CancellationToken cancellationToken);
+
         Task<Order?> GetByCorrelationIdAsync(
             Guid correlationId,
             CancellationToken cancellationToken);
@@ -25,7 +30,6 @@ namespace OrderFlow.Application.Abstractions
 
         Task<bool> UpdateAsync(
             int id,
-            Guid productId,
             int quantity,
             CancellationToken cancellationToken);
 

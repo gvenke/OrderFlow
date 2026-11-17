@@ -1,6 +1,7 @@
 ﻿using OrderFlow.Application.Abstractions;
 using OrderFlow.Application.Orders.CancelOrder;
 using OrderFlow.Application.Orders.CreateOrder;
+using OrderFlow.Application.Orders.SubmitOrder;
 using OrderFlow.Application.Orders.UpdateOrder;
 using OrderFlow.Contracts.Requests;
 using OrderFlow.Contracts.Responses;
@@ -18,17 +19,20 @@ public class OrderService
     private readonly CreateOrderHandler _createOrderHandler;
     private readonly CancelOrderHandler _cancelOrderHandler;
     private readonly UpdateOrderHandler _updateOrderHandler;
+    private readonly SubmitOrderHandler _submitOrderHandler;
 
     public OrderService(
         IOrderRepository repository,
         CreateOrderHandler createOrderHandler,
         CancelOrderHandler cancelOrderHandler,
-        UpdateOrderHandler updateOrderHandler)
+        UpdateOrderHandler updateOrderHandler,
+        SubmitOrderHandler submitOrderHandler)
     {
         _repository = repository;
         _createOrderHandler = createOrderHandler;
         _cancelOrderHandler = cancelOrderHandler;
         _updateOrderHandler = updateOrderHandler;
+        _submitOrderHandler = submitOrderHandler;
     }
 
     public async Task<GetOrderResponse?> GetByIdAsync(
@@ -81,13 +85,29 @@ public class OrderService
 
     public Task<bool> UpdateAsync(
         int id,
-        Guid productId,
         int quantity,
         CancellationToken cancellationToken)
     {
         return _updateOrderHandler.Handle(
-            new UpdateOrderCommand(id, productId, quantity),
+            new UpdateOrderCommand(id, quantity),
             cancellationToken);
+    }
+
+    public async Task<SubmitOrderResponse?> SubmitAsync(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _submitOrderHandler.Handle(
+            new SubmitOrderCommand(id),
+            cancellationToken);
+
+        if (result is null)
+            return null;
+
+        return new SubmitOrderResponse(
+            result.Id,
+            result.CorrelationId,
+            result.Status.ToString());
     }
 
     //public async Task<bool> DeleteAsync(

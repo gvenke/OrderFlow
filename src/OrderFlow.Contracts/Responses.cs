@@ -14,3 +14,8 @@ public record GetOrderResponse(
     Guid ProductId,
     int Quantity);
 
+public record SubmitOrderResponse(
+    int Id,
+    Guid CorrelationId,
+    string Status);
+

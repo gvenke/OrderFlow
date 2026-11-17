@@ -38,6 +38,9 @@ public class OrderFlowDbContext : DbContext
             entity.Property(x => x.CreatedAtUtc)
                 .IsRequired();
 
+            entity.Property(x => x.RowVersion)
+                .IsRowVersion();
+
             entity.HasIndex(x => x.CreatedAtUtc);
             entity.HasIndex(x => x.CorrelationId).IsUnique();
         });
