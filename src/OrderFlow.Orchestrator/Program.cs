@@ -87,4 +87,22 @@ builder.Services.AddMassTransit(x =>
 
 var host = builder.Build();
 
+var logger = host.Services
+    .GetRequiredService<ILogger<Program>>();
+
+var lifetime = host.Services
+    .GetRequiredService<IHostApplicationLifetime>();
+
+lifetime.ApplicationStarted.Register(() =>
+{
+    logger.LogInformation(
+        "OrderFlow Orchestrator has started successfully.");
+});
+
+lifetime.ApplicationStopping.Register(() =>
+{
+    logger.LogInformation(
+        "OrderFlow Orchestrator is shutting down.");
+});
+
 await host.RunAsync();

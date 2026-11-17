@@ -1,6 +1,7 @@
 ﻿
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using OrderFlow.Domain.Exceptions;
 
 namespace OrderFlow.Domain.Orders;
 
@@ -29,11 +30,11 @@ public class Order
         int quantity)
     {
         if (productId == Guid.Empty)
-            throw new ArgumentException(
+            throw new DomainValidationException(
                 "Product ID is required.");
 
         if (quantity <= 0)
-            throw new ArgumentException(
+            throw new DomainValidationException(
                 "Quantity must be positive.");
 
         return new Order
@@ -53,12 +54,12 @@ public class Order
 
         if (Status != OrderStatus.Draft)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Only draft orders can be updated.");
         }
 
         if (quantity <= 0)
-            throw new ArgumentException(
+            throw new DomainValidationException(
                 "Quantity must be positive.");
 
         Quantity = quantity;
@@ -67,7 +68,7 @@ public class Order
     public void Submit()
     {
         if (Status != OrderStatus.Draft)
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Only draft orders can be submitted.");
 
         Status = OrderStatus.Pending;
@@ -76,7 +77,7 @@ public class Order
     public void StartProcessing()
     {
         if (Status != OrderStatus.Pending)
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Only pending orders can be processed.");
 
         Status = OrderStatus.Processing;
@@ -85,7 +86,7 @@ public class Order
     public void Complete()
     {
         if (Status != OrderStatus.Processing)
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Order must be processing.");
 
         Status = OrderStatus.Completed;
@@ -96,7 +97,7 @@ public class Order
         if (Status is OrderStatus.Completed
             or OrderStatus.Cancelling
             or OrderStatus.Cancelled)
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Cannot fail a finalized order.");
 
         Status = OrderStatus.Failed;
@@ -110,7 +111,7 @@ public class Order
             or OrderStatus.Cancelled
             or OrderStatus.Failed)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Order cannot be cancelled in its current state.");
         }
 
