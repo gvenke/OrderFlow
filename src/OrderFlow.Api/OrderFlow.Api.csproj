@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>23180407-7d90-4a0d-bb7a-bbf39951ccbc</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+	<PackageReference Include="MassTransit.RabbitMQ" />
+    <PackageReference Include="MassTransit.EntityFrameworkCore" />
+	<PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+		<PrivateAssets>all</PrivateAssets>
+		<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	</PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OrderFlow.Contracts\OrderFlow.Contracts.csproj" />
+    <ProjectReference Include="..\OrderFlow.Domain\OrderFlow.Domain.csproj" />
+    <ProjectReference Include="..\OrderFlow.Infrastructure\OrderFlow.Infrastructure.csproj" />
+    <ProjectReference Include="..\OrderFlow.Application\OrderFlow.Application.csproj" />
+  </ItemGroup>
+
+</Project>
