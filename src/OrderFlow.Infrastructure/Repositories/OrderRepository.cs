@@ -44,6 +44,16 @@ public class OrderRepository : IOrderRepository
                 cancellationToken);
     }
 
+    public Task<Order?> GetByCorrelationIdForUpdateAsync(
+        Guid correlationId,
+        CancellationToken cancellationToken)
+    {
+        return _db.Orders
+            .FirstOrDefaultAsync(
+                x => x.CorrelationId == correlationId,
+                cancellationToken);
+    }
+
 
     public Task<Order?> GetByCorrelationIdAsync(
         Guid correlationId,

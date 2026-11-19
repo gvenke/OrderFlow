@@ -24,6 +24,10 @@ namespace OrderFlow.Application.Abstractions
             Guid correlationId,
             CancellationToken cancellationToken);
 
+        Task<Order?> GetByCorrelationIdForUpdateAsync(
+            Guid correlationId,
+            CancellationToken cancellationToken);
+
         Task<bool> DeleteAsync(
             int id,
             CancellationToken cancellationToken);

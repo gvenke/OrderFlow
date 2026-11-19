@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddScoped<UpdateOrderHandler>();
         services.AddScoped<SubmitOrderHandler>();
         services.AddScoped<OrderService>();
+        services.AddScoped<OrderEventService>();
         return services;
     }
 
@@ -59,11 +60,9 @@ public static class DependencyInjection
 
             x.UsingRabbitMq((context, cfg) =>
             {
-                var host = configuration["RabbitMq:Host"];
-
-                var username = configuration["RabbitMq:Username"];
-
-                var password = configuration["RabbitMq:Password"];
+                var host = configuration["RabbitMq:Host"] ?? throw new InvalidOperationException("RabbitMq:Host is missing.");
+                var username = configuration["RabbitMq:Username"] ?? throw new InvalidOperationException("RabbitMq:Username is missing.");
+                var password = configuration["RabbitMq:Password"] ?? throw new InvalidOperationException("RabbitMq:Password is missing.");
 
                 cfg.Host(host, "/", h =>
                 {
@@ -74,7 +73,8 @@ public static class DependencyInjection
                 cfg.ConfigureEndpoints(context);
             });
 
-            x.AddConsumer<OrderCancelledConsumer>();
+            x.AddConsumer<OrderStatusConsumer, OrderStatusConsumerDefinition>();
+            //x.AddConsumer<OrderCancelledConsumer>();
         });
 
         return services;

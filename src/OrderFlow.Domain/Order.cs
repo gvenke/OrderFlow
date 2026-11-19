@@ -85,37 +85,63 @@ public class Order
 
     public void Complete()
     {
+        if (Status == OrderStatus.Completed)
+            return;
+
         if (Status != OrderStatus.Processing)
             throw new BusinessRuleException(
-                "Order must be processing.");
+                "Only processing orders can be completed.");
 
         Status = OrderStatus.Completed;
     }
 
     public void Fail()
     {
+        
+        if (Status == OrderStatus.Failed)
+            return;
+
         if (Status is OrderStatus.Completed
-            or OrderStatus.Cancelling
-            or OrderStatus.Cancelled)
-            throw new BusinessRuleException(
-                "Cannot fail a finalized order.");
+        or OrderStatus.Cancelling
+        or OrderStatus.Cancelled)
+        throw new BusinessRuleException(
+            "Cannot fail a finalized order.");
 
         Status = OrderStatus.Failed;
     }
 
     public void Cancel()
     {
+    if (Status == OrderStatus.Cancelled ||
+        Status == OrderStatus.Cancelling)
+        return;
 
-        if (Status is OrderStatus.Completed
-            or OrderStatus.Cancelling
-            or OrderStatus.Cancelled
-            or OrderStatus.Failed)
+    if (Status == OrderStatus.Draft)
+    {
+        Status = OrderStatus.Cancelled;
+        return;
+    }
+
+    if (Status is OrderStatus.Completed
+        or OrderStatus.Failed)
+    {
+        throw new BusinessRuleException(
+            "Order cannot be cancelled in its current state.");
+    }
+    }
+
+    public void MarkCancelled()
+    {
+        if (Status == OrderStatus.Cancelled)
+            return;
+
+        if (Status != OrderStatus.Cancelling)
         {
             throw new BusinessRuleException(
-                "Order cannot be cancelled in its current state.");
+                "Only cancelling orders can be marked as cancelled.");
         }
 
-       Status = OrderStatus.Cancelling;
+        Status = OrderStatus.Cancelled;
     }
 }
 

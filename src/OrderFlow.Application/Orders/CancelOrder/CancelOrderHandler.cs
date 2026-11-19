@@ -32,15 +32,17 @@ public class CancelOrderHandler
             cancellationToken);
 
         if (order is null) return false;
+        bool publish = (order.Status != OrderStatus.Draft);
         order.Cancel();
 
-        await _publisher.PublishAsync(new OrderCancellationRequested(
-                order.CorrelationId),
-                cancellationToken);
-
-        await _unitOfWork.SaveChangesAsync(
+        // no need to publish if the order was in "draft" stage. It was already cancelled in "order.Cancel"
+        if (publish) {
+            await _publisher.PublishAsync(new OrderCancellationRequested(
+            order.CorrelationId),
             cancellationToken);
-
+        }
+       
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         return true;
     }
 }

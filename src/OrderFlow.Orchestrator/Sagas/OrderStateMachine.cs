@@ -43,6 +43,9 @@ public class OrderStateMachine : MassTransitStateMachine<OrderState>
                     context.Saga.SubmittedAtUtc =
                         DateTime.UtcNow;
                 })
+                .Publish(context =>
+                    new OrderProcessingStarted(
+                        context.Saga.CorrelationId))
                 .TransitionTo(AwaitingInventory)
         );
 

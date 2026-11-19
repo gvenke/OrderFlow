@@ -20,3 +20,13 @@ public record OrderCancellationRequested(
 public record OrderCancelled(
     Guid CorrelationId) : IMessage;
 
+public record OrderProcessingStarted(
+    Guid CorrelationId) : IMessage;
+
+
+public record OrderCompleted(
+    Guid CorrelationId) : IMessage;
+
+public record OrderFailed(
+    Guid CorrelationId,
+    string Reason) : IMessage;
