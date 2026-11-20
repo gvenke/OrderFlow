@@ -4,7 +4,7 @@ using System.Text;
 
 namespace OrderFlow.Contracts.Events;
 
-public interface IMessage
+public interface IEvent
 {
     Guid CorrelationId { get; }
 }
@@ -12,21 +12,21 @@ public interface IMessage
 public record OrderSubmitted(
     Guid CorrelationId,
     Guid ProductId,
-    int Quantity) : IMessage;
+    int Quantity) : IEvent;
 
 public record OrderCancellationRequested(
-    Guid CorrelationId) : IMessage;
+    Guid CorrelationId) : IEvent;
 
 public record OrderCancelled(
-    Guid CorrelationId) : IMessage;
+    Guid CorrelationId) : IEvent;
 
 public record OrderProcessingStarted(
-    Guid CorrelationId) : IMessage;
+    Guid CorrelationId) : IEvent;
 
 
 public record OrderCompleted(
-    Guid CorrelationId) : IMessage;
+    Guid CorrelationId) : IEvent;
 
 public record OrderFailed(
     Guid CorrelationId,
-    string Reason) : IMessage;
+    string Reason) : IEvent;

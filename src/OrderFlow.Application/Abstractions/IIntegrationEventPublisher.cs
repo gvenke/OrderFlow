@@ -8,7 +8,7 @@ namespace OrderFlow.Application.Abstractions
 {
     public interface IIntegrationEventPublisher
     {
-        Task PublishAsync<T>(T message, CancellationToken cancellationToken) where T: IMessage;
+        Task PublishAsync<T>(T message, CancellationToken cancellationToken) where T: IEvent;
     }
 
 

@@ -16,7 +16,7 @@ public class MassTransitEventPublisher
         _publishEndpoint = publishEndpoint;
     }
 
-    public Task PublishAsync<T>(T message, CancellationToken cancellationToken) where T : IMessage
+    public Task PublishAsync<T>(T message, CancellationToken cancellationToken) where T : IEvent
     {
         return _publishEndpoint.Publish(message, cancellationToken);
     }
