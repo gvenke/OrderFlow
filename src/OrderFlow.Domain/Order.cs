@@ -76,11 +76,12 @@ public class Order
 
     public void StartProcessing()
     {
-        if (Status != OrderStatus.Pending)
-            throw new BusinessRuleException(
-                "Only pending orders can be processed.");
+        if (Status == OrderStatus.Draft)
+            throw new BusinessRuleException("Only submitted orders can be processed.");
 
-        Status = OrderStatus.Processing;
+        // A late or duplicate message must not overwrite a newer status.
+        if (Status == OrderStatus.Pending)
+            Status = OrderStatus.Processing;
     }
 
     public void Complete()
@@ -112,22 +113,15 @@ public class Order
 
     public void Cancel()
     {
-    if (Status == OrderStatus.Cancelled ||
-        Status == OrderStatus.Cancelling)
-        return;
+        if (Status is OrderStatus.Cancelled or OrderStatus.Cancelling)
+            return;
 
-    if (Status == OrderStatus.Draft)
-    {
-        Status = OrderStatus.Cancelled;
-        return;
-    }
+        if (Status is OrderStatus.Completed or OrderStatus.Failed)
+            throw new BusinessRuleException("Order cannot be cancelled in its current state.");
 
-    if (Status is OrderStatus.Completed
-        or OrderStatus.Failed)
-    {
-        throw new BusinessRuleException(
-            "Order cannot be cancelled in its current state.");
-    }
+        Status = Status == OrderStatus.Draft
+            ? OrderStatus.Cancelled
+            : OrderStatus.Cancelling;
     }
 
     public void MarkCancelled()

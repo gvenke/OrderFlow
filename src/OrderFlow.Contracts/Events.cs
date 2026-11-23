@@ -30,3 +30,20 @@ public record OrderCompleted(
 public record OrderFailed(
     Guid CorrelationId,
     string Reason) : IEvent;
+
+public record ReserveInventory(
+    Guid CorrelationId,
+    Guid ProductId,
+    int Quantity) : IEvent;
+
+public record InventoryReserved(Guid CorrelationId) : IEvent;
+
+public record InventoryRejected(
+    Guid CorrelationId,
+    string Reason) : IEvent;
+
+public record ReleaseInventory(Guid CorrelationId) : IEvent;
+
+public record InventoryReleased(Guid CorrelationId) : IEvent;
+
+

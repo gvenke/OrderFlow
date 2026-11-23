@@ -26,22 +26,22 @@ public class CancelOrderHandler
         CancelOrderCommand command,
         CancellationToken cancellationToken)
     {
-        // 1. verify order
-        var order = await _repository.GetByIdAsync(
-            command.Id,
-            cancellationToken);
+        var order = await _repository.GetByIdForUpdateAsync(
+               command.Id, cancellationToken);
 
-        if (order is null) return false;
-        bool publish = (order.Status != OrderStatus.Draft);
+        if (order is null)
+            return false;
+
+        var wasCancelling = order.Status == OrderStatus.Cancelling;
         order.Cancel();
 
-        // no need to publish if the order was in "draft" stage. It was already cancelled in "order.Cancel"
-        if (publish) {
-            await _publisher.PublishAsync(new OrderCancellationRequested(
-            order.CorrelationId),
-            cancellationToken);
+        if (!wasCancelling && order.Status == OrderStatus.Cancelling)
+        {
+            await _publisher.PublishAsync(
+                new OrderCancellationRequested(order.CorrelationId),
+                cancellationToken);
         }
-       
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return true;
     }

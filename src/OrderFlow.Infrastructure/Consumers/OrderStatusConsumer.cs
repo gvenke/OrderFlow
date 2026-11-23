@@ -2,6 +2,7 @@
 using MassTransit;
 using OrderFlow.Application.Orders;
 using OrderFlow.Contracts.Events;
+using OrderFlow.Domain.Orders;
 
 namespace OrderFlow.Infrastructure.Consumers;
 
@@ -36,12 +37,19 @@ public class OrderStatusConsumer :
             context.CancellationToken);
     }
 
-    public Task Consume(
-        ConsumeContext<OrderFailed> context)
+    public Task Consume(ConsumeContext<OrderFailed> context)
     {
         return _service.ApplyAsync(
             context.Message.CorrelationId,
-            order => order.Fail(),
+            order =>
+            {
+                // At this stage, OrderFailed means Inventory rejected the reservation.
+                // If cancellation raced with rejection, there is no stock to release.
+                if (order.Status == OrderStatus.Cancelling)
+                    order.MarkCancelled();
+                else if (order.Status != OrderStatus.Cancelled)
+                    order.Fail();
+            },
             context.CancellationToken);
     }
 
