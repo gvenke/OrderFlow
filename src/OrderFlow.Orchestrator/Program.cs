@@ -1,10 +1,12 @@
 
 using MassTransit;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using OrderFlow.Health;
 using OrderFlow.Orchestrator.Persistence;
 using OrderFlow.Orchestrator.Sagas;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 // -----------------------------------------------------
 // Configuration
@@ -81,16 +83,30 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+// NEW: Wait for the MassTransit bus to start.
+builder.Services.Configure<MassTransitHostOptions>(
+    options =>
+    {
+        options.WaitUntilStarted = true;
+        options.StartTimeout = TimeSpan.FromSeconds(60);
+    });
+
+// NEW: Health checks
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<OrderSagaDbContext>(
+        name: "saga-database",
+        tags: new[] { "ready" });
+
 // -----------------------------------------------------
 // Start application
 // -----------------------------------------------------
 
-var host = builder.Build();
+var app = builder.Build();
 
-var logger = host.Services
+var logger = app.Services
     .GetRequiredService<ILogger<Program>>();
 
-var lifetime = host.Services
+var lifetime = app.Services
     .GetRequiredService<IHostApplicationLifetime>();
 
 lifetime.ApplicationStarted.Register(() =>
@@ -105,4 +121,7 @@ lifetime.ApplicationStopping.Register(() =>
         "OrderFlow Orchestrator is shutting down.");
 });
 
-await host.RunAsync();
+// The Orchestrator doesn't need controllers.
+app.MapOrderFlowHealthChecks();
+
+app.Run();

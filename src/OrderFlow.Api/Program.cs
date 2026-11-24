@@ -3,6 +3,7 @@ using OrderFlow.Api.ExceptionHandling;
 using OrderFlow.Application.Orders;
 using OrderFlow.Application.Orders.CreateOrder;
 using OrderFlow.Application.Orders.UpdateOrder;
+using OrderFlow.Health;
 using OrderFlow.Persistence;
 using System.Diagnostics;
 
@@ -45,5 +46,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapControllers();
+
+// NEW: Health endpoints
+app.MapOrderFlowHealthChecks();
 
 app.Run();

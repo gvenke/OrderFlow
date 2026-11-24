@@ -77,6 +77,21 @@ public static class DependencyInjection
             //x.AddConsumer<OrderCancelledConsumer>();
         });
 
+        // Allow startup to wait for MassTransit.
+        // Only add this if not already configured.
+        services.Configure<MassTransitHostOptions>(
+            options =>
+            {
+                options.WaitUntilStarted = true;
+                options.StartTimeout = TimeSpan.FromSeconds(60);
+            });
+
+        //  Health checks
+        services.AddHealthChecks()
+            .AddDbContextCheck<OrderFlowDbContext>(
+                name: "orders-database",
+                tags: new[] { "ready" });
+
         return services;
     }
 

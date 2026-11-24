@@ -1,10 +1,12 @@
 using MassTransit;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using OrderFlow.Health;
 using OrderFlow.Inventory.Consumers;
 using OrderFlow.Inventory.Infrastructure;
 using System.Data;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("Inventory")
     ?? throw new InvalidOperationException("ConnectionStrings:Inventory is missing.");
@@ -49,4 +51,23 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
-await builder.Build().RunAsync();
+// NEW: Wait for MassTransit startup.
+builder.Services.Configure<MassTransitHostOptions>(
+    options =>
+    {
+        options.WaitUntilStarted = true;
+        options.StartTimeout = TimeSpan.FromSeconds(60);
+    });
+
+// NEW: Health checks
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<InventoryDbContext>(
+        name: "inventory-database",
+        tags: new[] { "ready" });
+
+
+var app = builder.Build();
+
+app.MapOrderFlowHealthChecks();
+
+app.Run();
