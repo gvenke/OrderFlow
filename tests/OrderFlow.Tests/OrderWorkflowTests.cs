@@ -98,6 +98,47 @@ public sealed class OrderWorkflowTests
         Assert.AreEqual(3, await AvailableStockAsync(productId));
     }
 
+    [TestMethod]
+    public async Task MissingReservationReplyRetriesWithoutDeductingStockAgain()
+    {
+        var productId = await SeedStockAsync(3);
+        var draft = await CreateDraftAsync(productId, 2);
+        var submitted = await SubmitAsync(draft.Id);
+        var id = submitted.CorrelationId;
+        Task<string?> ReadSagaState() => ReadAsync<string>(
+            "OrderFlow", "SELECT CurrentState FROM OrderSagaStates WHERE CorrelationId = @id", id);
+
+        await WaitForAsync("AwaitingPayment", ReadSagaState);
+        await WaitForAsync("Processing", async () => (await GetOrderAsync(draft.Id)).Status);
+        Assert.AreEqual(1, await AvailableStockAsync(productId));
+
+        // Re-create the durable state left when Inventory committed but its reply never arrived.
+        // The real worker, RabbitMQ, saga, and Inventory consumer handle the retry.
+        await using (var connection = await OpenAsync("OrderFlow"))
+        {
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                UPDATE OrderSagaStates
+                SET CurrentState = 'AwaitingInventory',
+                    InventoryAttempts = 1,
+                    InventoryDeadlineUtc = SYSUTCDATETIME()
+                WHERE CorrelationId = @id AND CurrentState = 'AwaitingPayment'
+                """;
+            command.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = id;
+            Assert.AreEqual(1, await command.ExecuteNonQueryAsync());
+        }
+
+        await WaitForAsync("AwaitingPayment", ReadSagaState);
+        Assert.AreEqual(2, await ReadAsync<int>("OrderFlow",
+            "SELECT InventoryAttempts FROM OrderSagaStates WHERE CorrelationId = @id", id));
+        Assert.AreEqual("Reserved", await ReservationStatusAsync(id));
+        Assert.AreEqual(1, await AvailableStockAsync(productId));
+
+        await CancelAsync(draft.Id);
+        await WaitForAsync("Cancelled", async () => (await GetOrderAsync(draft.Id)).Status);
+        Assert.AreEqual(3, await AvailableStockAsync(productId));
+    }
+
     private static async Task<CreateOrderResponse> CreateDraftAsync(Guid productId, int quantity)
     {
         using var response = await Api.PostAsJsonAsync("", new CreateOrderRequest(productId, quantity));

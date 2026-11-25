@@ -24,5 +24,9 @@ public class OrderStateMap : SagaClassMap<OrderState>
 
         entity.Property(x => x.SubmittedAtUtc)
             .IsRequired();
+
+        entity.HasIndex(x => x.InventoryDeadlineUtc)
+            .HasFilter("[InventoryDeadlineUtc] IS NOT NULL");
+        entity.Property(x => x.InventoryRecoveryReason).HasMaxLength(200);
     }
 }

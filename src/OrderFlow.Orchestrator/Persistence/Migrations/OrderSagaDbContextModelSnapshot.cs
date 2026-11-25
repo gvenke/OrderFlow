@@ -202,6 +202,16 @@ namespace OrderFlow.Orchestrator.Persistence.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
+                    b.Property<int>("InventoryAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("InventoryDeadlineUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InventoryRecoveryReason")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uniqueidentifier");
 
@@ -212,6 +222,9 @@ namespace OrderFlow.Orchestrator.Persistence.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("CorrelationId");
+
+                    b.HasIndex("InventoryDeadlineUtc")
+                        .HasFilter("[InventoryDeadlineUtc] IS NOT NULL");
 
                     b.ToTable("OrderSagaStates", (string)null);
                 });

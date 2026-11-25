@@ -91,6 +91,8 @@ builder.Services.Configure<MassTransitHostOptions>(
         options.StartTimeout = TimeSpan.FromSeconds(60);
     });
 
+builder.Services.AddHostedService<InventoryDeadlineWorker>();
+
 // NEW: Health checks
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<OrderSagaDbContext>(
