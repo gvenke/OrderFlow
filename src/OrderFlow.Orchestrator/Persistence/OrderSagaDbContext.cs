@@ -1,4 +1,6 @@
-﻿
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Configuration;
+using OrderFlow.SharedInfrastructure;
 using MassTransit;
 using MassTransit.EntityFrameworkCoreIntegration;
 using Microsoft.EntityFrameworkCore;
@@ -6,18 +8,27 @@ using OrderFlow.Orchestrator.Sagas;
 
 namespace OrderFlow.Orchestrator.Persistence;
 
-public class OrderSagaDbContext : SagaDbContext
+public class OrderSagaDbContext : SagaDbContext, IMessagingSchemaContext
 {
     public OrderSagaDbContext(
-        DbContextOptions<OrderSagaDbContext> options)
+        DbContextOptions<OrderSagaDbContext> options, IConfiguration? configuration = null)
         : base(options)
     {
+        MessagingSchema = TestMessaging.GetSchema(configuration);
     }
+
+    public string? MessagingSchema { get; }
 
     protected override IEnumerable<ISagaClassMap>
         Configurations
     {
         get { yield return new OrderStateMap(); }
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        optionsBuilder.ReplaceService<IModelCacheKeyFactory, MessagingSchemaModelCacheKeyFactory>();
     }
 
     protected override void OnModelCreating(
@@ -32,12 +43,14 @@ public class OrderSagaDbContext : SagaDbContext
         modelBuilder.AddOutboxStateEntity();
 
         modelBuilder.Entity<InboxState>()
-            .ToTable("SagaInboxState");
+            .ToTable("SagaInboxState", MessagingSchema);
 
         modelBuilder.Entity<OutboxMessage>()
-            .ToTable("SagaOutboxMessage");
+            .ToTable("SagaOutboxMessage", MessagingSchema);
 
         modelBuilder.Entity<OutboxState>()
-            .ToTable("SagaOutboxState");
+            .ToTable("SagaOutboxState", MessagingSchema);
+
+        modelBuilder.Entity<OrderState>().ToTable("OrderSagaStates", MessagingSchema);
     }
 }

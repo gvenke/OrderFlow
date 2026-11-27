@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using OrderFlow.SharedInfrastructure;
 
 namespace OrderFlow.Health;
 
@@ -32,6 +33,7 @@ public static class HealthEndpointExtensions
             });
 
         // Readiness: are required dependencies usable?
+        var messagingSchema = TestMessaging.GetSchema(app.Configuration);
         app.MapHealthChecks(
             "/health/ready",
             new HealthCheckOptions
@@ -51,7 +53,13 @@ public static class HealthEndpointExtensions
                         StatusCodes.Status503ServiceUnavailable
                 },
 
-                ResponseWriter = WriteHealthResponse
+                ResponseWriter = (context, report) =>
+                {
+                    if (messagingSchema is not null)
+                        context.Response.Headers["OrderFlow-Messaging-Schema"] = messagingSchema;
+
+                    return WriteHealthResponse(context, report);
+                }
             });
     }
 

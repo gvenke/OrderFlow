@@ -66,13 +66,14 @@ builder.Services.AddMassTransit(x =>
     // Consumer Outbox for reliable message processing
     x.AddEntityFrameworkOutbox<OrderSagaDbContext>(o =>
     {
-        o.UseSqlServer();
+        // Resolve SQL lock table names from the EF model for the current schema.
+        o.UseSqlServer(false);
     });
 
     // RabbitMQ transport
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host(rabbitHost, "/", h =>
+        cfg.Host(rabbitHost, builder.Configuration["RabbitMq:VirtualHost"] ?? "/", h =>
         {
             h.Username(rabbitUsername);
             h.Password(rabbitPassword);

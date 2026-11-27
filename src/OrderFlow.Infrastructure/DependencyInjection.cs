@@ -1,4 +1,4 @@
-﻿
+
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -54,7 +54,8 @@ public static class DependencyInjection
         {
             x.AddEntityFrameworkOutbox<OrderFlowDbContext>(o =>
             {
-                o.UseSqlServer();
+                // Resolve SQL lock table names from the EF model for the current schema.
+                o.UseSqlServer(false);
                 o.UseBusOutbox();
             });
 
@@ -64,7 +65,7 @@ public static class DependencyInjection
                 var username = configuration["RabbitMq:Username"] ?? throw new InvalidOperationException("RabbitMq:Username is missing.");
                 var password = configuration["RabbitMq:Password"] ?? throw new InvalidOperationException("RabbitMq:Password is missing.");
 
-                cfg.Host(host, "/", h =>
+                cfg.Host(host, configuration["RabbitMq:VirtualHost"] ?? "/", h =>
                 {
                     h.Username(username);
                     h.Password(password);

@@ -11,7 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Inventory")
     ?? throw new InvalidOperationException("ConnectionStrings:Inventory is missing.");
 
-var rabbitHost = builder.Configuration["RabbitMq:Host"] ?? "localhost";
+var rabbitHost = builder.Configuration["RabbitMq:Host"]
+    ?? throw new InvalidOperationException("RabbitMq:Host is missing.");
 
 var rabbitUsername = builder.Configuration["RabbitMq:Username"]
     ?? throw new InvalidOperationException("RabbitMq:Username is missing.");
@@ -28,13 +29,14 @@ builder.Services.AddMassTransit(x =>
 
     x.AddEntityFrameworkOutbox<InventoryDbContext>(options =>
     {
-        options.UseSqlServer();
+        // Resolve SQL lock table names from the EF model for the current schema.
+        options.UseSqlServer(false);
         options.IsolationLevel = IsolationLevel.Serializable;
     });
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host(rabbitHost, "/", host =>
+        cfg.Host(rabbitHost, builder.Configuration["RabbitMq:VirtualHost"] ?? "/", host =>
         {
             host.Username(rabbitUsername);
             host.Password(rabbitPassword);

@@ -1,20 +1,31 @@
-﻿
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Configuration;
+using OrderFlow.SharedInfrastructure;
 using MassTransit;
+using MassTransit.EntityFrameworkCoreIntegration;
 using Microsoft.EntityFrameworkCore;
 using OrderFlow.Domain.Orders;
-using System.Reflection.Emit;
 
 namespace OrderFlow.Persistence;
 
-public class OrderFlowDbContext : DbContext
+public class OrderFlowDbContext : DbContext, IMessagingSchemaContext
 {
     public OrderFlowDbContext(
-        DbContextOptions<OrderFlowDbContext> options)
+        DbContextOptions<OrderFlowDbContext> options, IConfiguration? configuration = null)
         : base(options)
     {
+        MessagingSchema = TestMessaging.GetSchema(configuration);
     }
 
+    public string? MessagingSchema { get; }
+
     public DbSet<Order> Orders => Set<Order>();
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        optionsBuilder.ReplaceService<IModelCacheKeyFactory, MessagingSchemaModelCacheKeyFactory>();
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -48,5 +59,12 @@ public class OrderFlowDbContext : DbContext
         modelBuilder.AddInboxStateEntity();
         modelBuilder.AddOutboxMessageEntity();
         modelBuilder.AddOutboxStateEntity();
+
+        if (MessagingSchema is not null)
+        {
+            modelBuilder.Entity<InboxState>().ToTable("InboxState", MessagingSchema);
+            modelBuilder.Entity<OutboxMessage>().ToTable("OutboxMessage", MessagingSchema);
+            modelBuilder.Entity<OutboxState>().ToTable("OutboxState", MessagingSchema);
+        }
     }
 }

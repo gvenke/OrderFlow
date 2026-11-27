@@ -1,15 +1,26 @@
-﻿using MassTransit;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Configuration;
+using OrderFlow.SharedInfrastructure;
+using MassTransit;
+using MassTransit.EntityFrameworkCoreIntegration;
 using Microsoft.EntityFrameworkCore;
 using OrderFlow.Inventory.Domain;
-using System.Reflection.Emit;
 
 namespace OrderFlow.Inventory.Infrastructure;
 
 public sealed class InventoryDbContext(
-    DbContextOptions<InventoryDbContext> options) : DbContext(options)
+    DbContextOptions<InventoryDbContext> options, IConfiguration? configuration = null) : DbContext(options), IMessagingSchemaContext
 {
+    public string? MessagingSchema { get; } = TestMessaging.GetSchema(configuration);
+
     public DbSet<StockItem> StockItems => Set<StockItem>();
     public DbSet<InventoryReservation> Reservations => Set<InventoryReservation>();
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        optionsBuilder.ReplaceService<IModelCacheKeyFactory, MessagingSchemaModelCacheKeyFactory>();
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -34,5 +45,12 @@ public sealed class InventoryDbContext(
         modelBuilder.AddInboxStateEntity();
         modelBuilder.AddOutboxMessageEntity();
         modelBuilder.AddOutboxStateEntity();
+
+        if (MessagingSchema is not null)
+        {
+            modelBuilder.Entity<InboxState>().ToTable("InboxState", MessagingSchema);
+            modelBuilder.Entity<OutboxMessage>().ToTable("OutboxMessage", MessagingSchema);
+            modelBuilder.Entity<OutboxState>().ToTable("OutboxState", MessagingSchema);
+        }
     }
 }

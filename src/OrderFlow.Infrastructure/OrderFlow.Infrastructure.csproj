@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <PackageReference Include="MassTransit" />
@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\OrderFlow.SharedInfrastructure\OrderFlow.SharedInfrastructure.csproj" />
     <ProjectReference Include="..\OrderFlow.Contracts\OrderFlow.Contracts.csproj" />
     <ProjectReference Include="..\OrderFlow.Domain\OrderFlow.Domain.csproj" />
     <ProjectReference Include="..\OrderFlow.Application\OrderFlow.Application.csproj" />
